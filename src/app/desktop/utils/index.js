@@ -311,10 +311,11 @@ export const get7zPath = async () => {
   return path.join(baseDir, '7za.exe');
 };
 
-export const extractNatives = async (libraryJar, extractLocation) => {
+export const extractNatives = async (libraries, instancePath) => {
+  const extractLocation = path.join(instancePath, 'natives');
   const sevenZipPath = await get7zPath();
   await Promise.all(
-    libraryJar
+    libraries
       .filter(l => l.natives)
       .map(async l => {
         const extraction = extractFull(l.path, extractLocation, {
@@ -362,7 +363,6 @@ export const copyAssetsToLegacy = async assets => {
 const hiddenToken = '__HIDDEN_TOKEN__';
 export const getJVMArguments112 = (
   libraries,
-  nativeLibs,
   mcjar,
   instancePath,
   assetsPath,
@@ -391,7 +391,7 @@ export const getJVMArguments112 = (
   args.push(`-Xmx${memory}m`);
   args.push(`-Xms${memory}m`);
   args.push(...jvmOptions);
-  args.push(`-Djava.library.path="${nativeLibs}"`);
+  args.push(`-Djava.library.path="${path.join(instancePath, 'natives')}"`);
   args.push(`-Dminecraft.applet.TargetDirectory="${instancePath}"`);
 
   args.push(mcJson.mainClass);
@@ -460,7 +460,6 @@ export const getJVMArguments112 = (
 
 export const getJVMArguments113 = (
   libraries,
-  nativeLibs,
   mcjar,
   instancePath,
   assetsPath,
@@ -540,7 +539,10 @@ export const getJVMArguments113 = (
             val = 600;
             break;
           case 'natives_directory':
-            val = args[i].replace(argDiscovery, `"${nativeLibs}"`);
+            val = args[i].replace(
+              argDiscovery,
+              `"${path.join(instancePath, 'natives')}"`
+            );
             break;
           case 'launcher_name':
             val = args[i].replace(argDiscovery, 'KoalaLauncher');
@@ -734,10 +736,9 @@ export const extractFace = async buffer => {
   return imageBuffer.toString('base64');
 };
 
-export const normalizeModData = (data, projectID, modName, categorySection) => {
+export const normalizeModData = (data, projectID, modName) => {
   const temp = data;
   temp.name = modName;
-  temp.categorySection = { path: categorySection.path };
   if (data.projectID && data.fileID) return temp;
   if (data.id) {
     temp.projectID = projectID;
