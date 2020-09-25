@@ -65,6 +65,7 @@ const RowContainer = styled.div.attrs(props => ({
     justify-content: center;
     align-items: center;
     transition: color 0.1s ease-in-out;
+    color: ${props => props.isHovered && props.theme.palette.primary.main};
     cursor: pointer;
     svg {
       margin-right: 10px;
@@ -221,6 +222,7 @@ const toggleModDisabled = async (
 const Row = memo(({ index, style, data }) => {
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const curseReleaseChannel = useSelector(
     state => state.settings.curseReleaseChannel
   );
@@ -243,7 +245,7 @@ const Row = memo(({ index, style, data }) => {
   return (
     <>
       <ContextMenuTrigger id={item.displayName}>
-        <RowContainer index={index} override={style}>
+        <RowContainer index={index} override={style} isHovered={isHovered}>
           <div className="leftPartContent">
             <Checkbox
               checked={selectedMods.includes(item.fileName)}
@@ -345,7 +347,11 @@ const Row = memo(({ index, style, data }) => {
         </RowContainer>
       </ContextMenuTrigger>
       <Portal>
-        <ContextMenu id={item.displayName}>
+        <ContextMenu
+          id={item.displayName}
+          onShow={() => setIsHovered(true)}
+          onHide={() => setIsHovered(false)}
+        >
           <MenuItem
             onClick={() => {
               clipboard.writeText(item.displayName);
@@ -394,6 +400,18 @@ const filter = (arr, search) =>
       mod.fileName.toLowerCase().includes(search.toLowerCase()) ||
       mod.displayName.toLowerCase().includes(search.toLowerCase())
   );
+
+const getFileType = file => {
+  const fileName = file.name;
+  let fileType = '';
+
+  const splitFileName = fileName.split('.');
+  if (splitFileName.length) {
+    fileType = splitFileName[splitFileName.length - 1];
+  }
+
+  return fileType;
+};
 
 const Mods = ({ instanceName }) => {
   const instance = useSelector(state => _getInstance(state)(instanceName));
@@ -472,17 +490,13 @@ const Mods = ({ instanceName }) => {
     setFileDrop(true);
     const dragComp = {};
     const { files } = e.dataTransfer;
-    const arrTypes = Object.values(files).map(file => {
-      const fileName = file.name;
-      const fileType = fileName.split('.')[1];
-      return fileType;
-    });
 
     await pMap(
       Object.values(files),
       async file => {
         const fileName = file.name;
-        const fileType = fileName.split('.')[1];
+        const fileType = getFileType(file);
+        const existingMods = itemData.items.map(item => item.fileName);
 
         dragComp[fileName] = false;
 
@@ -490,36 +504,23 @@ const Mods = ({ instanceName }) => {
 
         const { path: filePath } = file;
 
-        if (Object.values(files).length === 1) {
-          if (fileType === 'jar' || fileType === 'disabled') {
-            await fse.copy(
-              filePath,
-              path.join(instancesPath, instanceName, 'mods', fileName)
-            );
-            dragComp[fileName] = true;
-          } else {
-            console.error('This file is not a mod!');
-            setFileDrop(false);
-            setFileDrag(false);
-          }
+        if (existingMods.includes(fileName)) {
+          console.error(
+            'A mod with this name already exists in the instance.',
+            file.name
+          );
+          setFileDrop(false);
+          setFileDrag(false);
+        } else if (fileType === 'jar' || fileType === 'disabled') {
+          await fse.copy(
+            filePath,
+            path.join(instancesPath, instanceName, 'mods', fileName)
+          );
+          dragComp[fileName] = true;
         } else {
-          /* eslint-disable */
-          if (arrTypes.includes('jar')) {
-            if (fileType === 'jar') {
-              await fse.copy(
-                filePath,
-                path.join(instancesPath, instanceName, 'mods', fileName)
-              );
-              dragComp[fileName] = true;
-            } else {
-              setFileDrop(false);
-              setFileDrag(false);
-            }
-          } else {
-            console.error('The files are  not a mod!');
-            setFileDrop(false);
-            setFileDrag(false);
-          }
+          console.error('This file is not a mod!', file);
+          setFileDrop(false);
+          setFileDrag(false);
         }
       },
       { concurrency: 10 }

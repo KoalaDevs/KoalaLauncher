@@ -26,7 +26,7 @@ import * as ActionTypes from './actionTypes';
 import {
   NEWS_URL,
   MC_RESOURCES_URL,
-  GDL_LEGACYJAVAFIXER_MOD_URL,
+  LEGACYJAVAFIXER_URL,
   FORGE,
   FABRIC,
   FMLLIBS_OUR_BASE_URL,
@@ -341,7 +341,7 @@ export function downloadJavaLegacyFixer() {
     const state = getState();
     await downloadFile(
       path.join(_getDataStorePath(state), '__JLF__.jar'),
-      GDL_LEGACYJAVAFIXER_MOD_URL
+      LEGACYJAVAFIXER_URL
     );
   };
 }
@@ -355,7 +355,17 @@ export function login(username, password, redirect = true) {
       throw new Error('No username or password provided');
     }
     try {
-      const { data } = await mcAuthenticate(username, password, clientToken);
+      let data = null;
+      try {
+        ({ data } = await mcAuthenticate(username, password, clientToken));
+      } catch (err) {
+        console.error(err);
+        throw new Error('Invalid username or password.');
+      }
+
+      if (!data?.selectedProfile?.id) {
+        throw new Error("It looks like you didn't buy the game.");
+      }
       const skinUrl = await getPlayerSkin(data.selectedProfile.id);
       if (skinUrl) {
         data.skin = skinUrl;
@@ -648,15 +658,23 @@ export function updateInstanceConfig(
         instanceName,
         'config.json'
       );
+      const tempConfigPath = path.join(
+        _getInstancesPath(state),
+        instanceName,
+        'config_new_temp.json'
+      );
       // Remove queue and name, they are augmented in the reducer and we don't want them in the config file
       const newConfig = updateFunction(omit(instance, ['queue', 'name']));
       try {
         await fs.lstat(configPath);
 
-        await fse.outputJson(configPath, newConfig);
+        await fse.outputJson(tempConfigPath, newConfig);
+
+        await fse.rename(tempConfigPath, configPath);
       } catch {
         if (forceWrite) {
-          await fse.outputJson(configPath, newConfig);
+          await fse.outputJson(tempConfigPath, newConfig);
+          await fse.rename(tempConfigPath, configPath);
         }
       }
       dispatch({
@@ -1338,9 +1356,8 @@ export function downloadInstance(instanceName) {
       state.settings.concurrentDownloads
     );
 
-    // Wait 400ms to avoid "The process cannot access the file because it is being used by another process."
+    // Wait 1000ms to avoid "The process cannot access the file because it is being used by another process."
     await new Promise(resolve => setTimeout(resolve, 1000));
-
     await extractNatives(
       libraries,
       path.join(_getInstancesPath(state), instanceName)
@@ -1520,14 +1537,22 @@ export const startListener = () => {
             const notMatch = (data.unmatchedFingerprints || [])[0];
             let mod = {};
             if (exactMatch) {
-              const { data: addon } = await getAddon(exactMatch.file.projectId);
-
-              mod = normalizeModData(
-                exactMatch.file,
-                exactMatch.file.projectId,
-                addon.name
-              );
-              mod.fileName = path.basename(fileName);
+              let addon = null;
+              try {
+                addon = (await getAddon(exactMatch.file.projectId)).data;
+                mod = normalizeModData(
+                  exactMatch.file,
+                  exactMatch.file.projectId,
+                  addon.name
+                );
+                mod.fileName = path.basename(fileName);
+              } catch {
+                mod = {
+                  fileName: path.basename(fileName),
+                  displayName: path.basename(fileName),
+                  packageFingerprint: murmurHash
+                };
+              }
             } else if (notMatch) {
               mod = {
                 fileName: path.basename(fileName),
@@ -1929,8 +1954,6 @@ export function launchInstance(instanceName) {
       '__JLF__.jar'
     );
 
-    // const errorLogs = '';
-
     const mcJson = await fse.readJson(
       path.join(_getMinecraftVersionsPath(state), `${modloader[1]}.json`)
     );
@@ -2083,39 +2106,11 @@ export function launchInstance(instanceName) {
       instanceJLFPath,
       symLinkDirPath
     );
-
     dispatch(addStartedInstance({ instanceName, pid: ps.pid }));
 
     if (state.settings.hideWindowOnGameLaunch) {
       await ipcRenderer.invoke('hide-window');
     }
-
-    // ps.stdout.on('data', data => {
-    //   console.log(data.toString());
-    //   if (data.toString().includes('Setting user:')) {
-    //     dispatch(updateStartedInstance({ instanceName, initialized: true }));
-    //   }
-    // });
-
-    // ps.stderr.on('data', data => {
-    //   console.error(`ps stderr: ${data}`);
-    //   errorLogs += data || '';
-    // });
-
-    // ps.on('close', code => {
-    //   ipcRenderer.invoke('show-window');
-    //   dispatch(removeStartedInstance(instanceName));
-    //   clearInterval(playTimer);
-    //   if (code !== 0 && errorLogs) {
-    //     dispatch(
-    //       openModal('InstanceCrashed', {
-    //         code,
-    //         errorLogs: errorLogs?.toString('utf8')
-    //       })
-    //     );
-    //     console.warn(`Process exited with code ${code}. Not too good..`);
-    //   }
-    // });
   };
 }
 
@@ -2306,7 +2301,7 @@ export const initLatestMods = instanceName => {
 export const getAppLatestVersion = () => {
   return async () => {
     const { data: latestReleases } = await axios.get(
-      'https://api.github.com/repos/gorilla-devs/GDLauncher/releases'
+      'https://api.github.com/repos/KoalaDevs/KoalaLauncher/releases'
     );
 
     const latestPrerelease = latestReleases.find(v => v.prerelease);
@@ -2350,7 +2345,7 @@ export const checkForPortableUpdates = () => {
     // Latest version has a value only if the user is not using the latest
     if (latestVersion) {
       // eslint-disable-next-line
-      const baseAssetUrl = `https://github.com/gorilla-devs/GDLauncher/releases/download/${latestVersion?.tag_name}`;
+      const baseAssetUrl = `https://github.com/KoalaDevs/KoalaLauncher/releases/download/${latestVersion?.tag_name}`;
       const { data: latestManifest } = await axios.get(
         `${baseAssetUrl}/${process.platform}_latest.json`
       );
