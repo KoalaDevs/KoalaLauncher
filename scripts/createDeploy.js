@@ -181,7 +181,7 @@ const commonConfig = {
   ...((!process.env.RELEASE_TESTING || process.platform === 'win32') && {
     win:
         type === 'setup'
-        ? ['nsis-web:x64', 'appx:x64' ]
+        ? ['nsis-web:x64']
         : ['zip:x64']
   }),
 
