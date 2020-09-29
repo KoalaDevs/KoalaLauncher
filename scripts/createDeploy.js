@@ -236,7 +236,7 @@ const main = async () => {
     portable: {
       darwin: [],
       win32: [`${productName}-win-${type}.zip`],
-      linux: [``]
+      linux: []
     }
   };
 
