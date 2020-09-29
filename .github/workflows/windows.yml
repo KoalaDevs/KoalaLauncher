@@ -45,6 +45,7 @@ jobs:
     # Build Koala Launcher
     - name: Build Koala Launcher
       env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
         RELEASE_TESTING: true
       run: yarn release
 
