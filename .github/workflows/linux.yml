@@ -46,7 +46,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: KoalaLauncher-linux
-        path: D:\a\KoalaLauncher\KoalaLauncher\deploy
+        path: /home/runner/work/KoalaDevs/KoalaLauncher/deploy
 
     # Send Webhook Notification
     - uses: actions/setup-ruby@v1
