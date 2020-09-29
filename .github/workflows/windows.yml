@@ -28,7 +28,7 @@ jobs:
     
     # Install Node Tools
     - name: Install Node Tools
-      run: npm install --global --production --vs2019 windwos-build-tools@4.0.0
+      run: npm install --global --production --vs2019 windows-build-tools@4.0.0
     
     # Install Node GYP
     - name: Install Node GYP
