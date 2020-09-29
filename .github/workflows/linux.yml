@@ -30,6 +30,10 @@ jobs:
     - name: Install Node GYP
       run: npm install --global node-gyp@latest
     
+    # Install RPM Tools
+    - name: Installing RPM Tools
+      run: sudo apt install rpm
+
     # Fetch Koala Dependenices
     - name: Fetch Koala Dependencies
       run: yarn
