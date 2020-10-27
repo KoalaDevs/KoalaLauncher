@@ -10,12 +10,15 @@ import Modal from "../components/Modal";
 import { addToQueue } from "../reducers/actions";
 import { _getInstance } from "../utils/selectors";
 import { closeAllModals } from "../reducers/modals/actions";
-import { FABRIC, VANILLA, FORGE } from "../utils/constants";
-import { getFilteredVersions } from "../../app/desktop/utils";
+import { FABRIC, VANILLA, FORGE, LITELOADER } from "../utils/constants";
+import { getFilteredVersions, isMod } from "../../app/desktop/utils";
 
 const McVersionChanger = ({ instanceName, defaultValue }) => {
   const vanillaManifest = useSelector((state) => state.app.vanillaManifest);
   const fabricManifest = useSelector((state) => state.app.fabricManifest);
+  const liteloaderManifest = useSelector(
+    (state) => state.app.liteloaderManifest
+  );
   const forgeManifest = useSelector((state) => state.app.forgeManifest);
   const config = useSelector((state) => _getInstance(state)(instanceName));
   const [selectedVersion, setSelectedVersion] = useState(null);
@@ -23,8 +26,13 @@ const McVersionChanger = ({ instanceName, defaultValue }) => {
   const dispatch = useDispatch();
 
   const filteredVers = useMemo(() => {
-    return getFilteredVersions(vanillaManifest, forgeManifest, fabricManifest);
-  }, [vanillaManifest, forgeManifest, fabricManifest]);
+    return getFilteredVersions(
+      vanillaManifest,
+      forgeManifest,
+      fabricManifest,
+      liteloaderManifest
+    );
+  }, [vanillaManifest, forgeManifest, fabricManifest, liteloaderManifest]);
 
   const patchedDefaultValue = useMemo(() => {
     const isFabric = defaultValue[0] === FABRIC;
@@ -109,7 +117,7 @@ const McVersionChanger = ({ instanceName, defaultValue }) => {
               selectedVersion && !isEqual(patchedDefaultValue, selectedVersion)
             }
             css={`
-              width: 70px;
+              width: 85px;
               height: 40px;
               transition: 0.1s ease-in-out;
               display: flex;
@@ -145,6 +153,7 @@ const McVersionChanger = ({ instanceName, defaultValue }) => {
               const isVanilla = selectedVersion[0] === VANILLA;
               const isFabric = selectedVersion[0] === FABRIC;
               const isForge = selectedVersion[0] === FORGE;
+              const isLiteLoader = selectedVersion[0] === LITELOADER;
 
               const isSameLoader =
                 selectedVersion[0] === patchedDefaultValue[0];
@@ -154,6 +163,17 @@ const McVersionChanger = ({ instanceName, defaultValue }) => {
                   addToQueue(
                     instanceName,
                     [selectedVersion[0], selectedVersion[2]],
+                    null,
+                    background
+                  )
+                );
+              } else if (isLiteLoader) {
+                dispatch(
+                  addToQueue(
+                    instanceName,
+                    isMod && isSameLoader
+                      ? [...selectedVersion, ...defaultValue.slice(3, 5)]
+                      : selectedVersion,
                     null,
                     background
                   )

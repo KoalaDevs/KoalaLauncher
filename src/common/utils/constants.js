@@ -2,6 +2,7 @@ export const MC_MANIFEST_URL =
   "https://launchermeta.mojang.com/mc/game/version_manifest.json";
 export const MC_RESOURCES_URL = "http://resources.download.minecraft.net";
 export const FABRIC_APIS = "https://meta.fabricmc.net/v2";
+export const LITELOADER_APIS = "http://dl.liteloader.com/";
 export const LEGACYJAVAFIXER_URL =
   "https://cdn.crankysupertoon.live/koala/fmllibs/legacyjavafixer-1.0.jar";
 export const MOJANG_APIS = "https://authserver.mojang.com";
@@ -22,4 +23,5 @@ export const IMGUR_CLIENT_ID = "509a564cf4466c9";
 export const FABRIC = "fabric";
 export const FORGE = "forge";
 export const VANILLA = "vanilla";
+export const LITELOADER = "liteloader";
 export const CURSEFORGE_URL = "https://www.curseforge.com";

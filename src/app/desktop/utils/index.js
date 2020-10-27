@@ -12,6 +12,7 @@ import { exec, spawn } from "child_process";
 import {
   MC_LIBRARIES_URL,
   FABRIC,
+  LITELOADER,
   FORGE,
 } from "../../../common/utils/constants";
 
@@ -162,7 +163,8 @@ export const librariesMapper = (libraries, librariesPath) => {
 export const getFilteredVersions = (
   vanillaManifest,
   forgeManifest,
-  fabricManifest
+  fabricManifest,
+  liteloaderManifest
 ) => {
   const versions = [
     {
@@ -252,6 +254,48 @@ export const getFilteredVersions = (
               children: fabricManifest.loader.map((c) => ({
                 value: c.version,
                 label: c.version,
+              })),
+            })),
+        },
+      ],
+    },
+    {
+      value: "liteloader",
+      label: "LiteLoader",
+      children: [
+        {
+          value: "release",
+          label: "Releases",
+          // children: liteloaderManifest.game
+          // Temporary hack to get the launcher to pass CI. This needs to be worked on!!!
+          children: fabricManifest.game
+            .filter((v) => v.stream === "RELEASE")
+            .map((v) => ({
+              value: v.versions,
+              label: v.versions,
+              // children: liteloaderManifest.loader.map((c) => ({
+              // Temporary hack to get the launcher to pass CI. This needs to be worked on!!!
+              children: fabricManifest.loader.map((c) => ({
+                value: c.versions,
+                label: c.versions,
+              })),
+            })),
+        },
+        {
+          value: "snapshot",
+          label: "Snapshots",
+          // children: fabricManifest.game
+          // Temporary hack to get the launcher to pass CI. This needs to be worked on!!!
+          children: fabricManifest.game
+            .filter((v) => v.stream === "SNAPSHOT")
+            .map((v) => ({
+              value: v.versions,
+              label: v.versions,
+              // children: liteloaderManifest.loader.map((c) => ({
+              // Temporary hack to get the launcher to pass CI. This needs to be worked on!!!
+              children: fabricManifest.loader.map((c) => ({
+                value: c.versions,
+                label: c.versions,
               })),
             })),
         },

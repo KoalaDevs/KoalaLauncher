@@ -47,6 +47,15 @@ function fabricManifest(state = [], action) {
   }
 }
 
+function liteloaderManifest(state = [], action) {
+  switch (action.type) {
+    case ActionTypes.UPDATE_LITELOADER_MANIFEST:
+      return action.data;
+    default:
+      return state;
+  }
+}
+
 function forgeManifest(state = [], action) {
   switch (action.type) {
     case ActionTypes.UPDATE_FORGE_MANIFEST:
@@ -107,6 +116,7 @@ export default combineReducers({
   vanillaManifest,
   forgeManifest,
   fabricManifest,
+  liteloaderManifest,
   javaManifest,
   curseforgeCategories,
   clientToken,
