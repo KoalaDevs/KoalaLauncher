@@ -11,7 +11,7 @@ import { Transition } from "react-transition-group";
 import styled from "styled-components";
 import pMap from "p-map";
 import { get7zPath } from "../../../../app/desktop/utils";
-import { FABRIC, VANILLA, FORGE } from "../../../utils/constants";
+import { FABRIC, VANILLA, FORGE, LITELOADER } from "../../../utils/constants";
 
 /**
  *
@@ -81,6 +81,11 @@ export default function ThirdStep({
           primary: true,
         };
         break;
+      case LITELOADER:
+        loader = {
+          id: modloaderName,
+          primary: true,
+        };
       default:
         throw new Error(
           `Unknown loader type. Cannot export modloaderName: ${modloaderName}`

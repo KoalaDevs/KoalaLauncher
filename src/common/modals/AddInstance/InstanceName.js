@@ -22,7 +22,7 @@ import {
 import { _getInstancesPath, _getTempPath } from '../../utils/selectors';
 import bgImage from '../../assets/mcCube.jpg';
 import { downloadFile } from '../../../app/desktop/utils/downloader';
-import { FABRIC, VANILLA, FORGE } from '../../utils/constants';
+import { FABRIC, VANILLA, FORGE, LITELOADER } from '../../utils/constants';
 
 const InstanceName = ({
   in: inProp,
@@ -87,6 +87,7 @@ const InstanceName = ({
     const isVanilla = version[0] === VANILLA;
     const isFabric = version[0] === FABRIC;
     const isForge = version[0] === FORGE;
+    const isLiteLoader = version[0] === LITELOADER;
     const isCurseModpack = Boolean(modpack?.attachments);
     let manifest;
     if (isCurseModpack) {
@@ -196,7 +197,11 @@ const InstanceName = ({
       } else if (version[0] === VANILLA) {
         const modloader = [version[0], manifest.minecraft.version];
         dispatch(addToQueue(localInstanceName, modloader, manifest));
+      } else if (version[0] === LITELOADER) {
+        const modloader = [version[0], manifest.minecraft.version];
+        dispatch(addToQueue(localInstanceName, modloader, manifest));
       }
+
     } else if (isVanilla) {
       dispatch(addToQueue(localInstanceName, [version[0], version[2]]));
       await wait(2);
@@ -204,6 +209,9 @@ const InstanceName = ({
       dispatch(addToQueue(localInstanceName, [FABRIC, version[2], version[3]]));
       await wait(2);
     } else if (isForge) {
+      dispatch(addToQueue(localInstanceName, version));
+      await wait(2);
+    } else if (isLiteLoader) {
       dispatch(addToQueue(localInstanceName, version));
       await wait(2);
     }

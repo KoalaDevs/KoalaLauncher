@@ -275,6 +275,7 @@ const Overview = ({ instanceName, background, manifest }) => {
           >
             {config?.modloader[0] === "vanilla" ? "Vanilla " : ""}
             {config?.modloader[0] === "fabric" ? "Fabric " : ""}
+            {config?.modloader[0] === "liteloader" ? "LiteLoader " : ""}
             {config?.modloader[0] === "forge" ? "Forge " : ""}
             {config?.modloader[1]}
             {config?.modloader[0] === "fabric" ? " - " : ""}

@@ -28,7 +28,12 @@ import { launchInstance } from "../../../../common/reducers/actions";
 import { openModal } from "../../../../common/reducers/modals/actions";
 import instanceDefaultBackground from "../../../../common/assets/instance_default.png";
 import { convertMinutesToHumanTime } from "../../../../common/utils";
-import { FABRIC, FORGE, VANILLA } from "../../../../common/utils/constants";
+import {
+  FABRIC,
+  FORGE,
+  VANILLA,
+  LITELOADER,
+} from "../../../../common/utils/constants";
 
 const Container = styled.div`
   position: relative;
@@ -331,7 +336,8 @@ const Instance = ({ instanceName }) => {
               !(
                 instance.modloader[0] === FORGE ||
                 instance.modloader[0] === FABRIC ||
-                instance.modloader[0] === VANILLA
+                instance.modloader[0] === VANILLA ||
+                instance.modloader[0] === LITELOADER
               )
             }
           >

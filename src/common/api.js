@@ -8,6 +8,7 @@ import {
   JAVA_MANIFEST_URL,
   IMGUR_CLIENT_ID,
   FORGESVC_CATEGORIES,
+  LITELOADER_APIS,
 } from "./utils/constants";
 import { sortByDate } from "./utils";
 
@@ -92,6 +93,11 @@ export const getForgeManifest = () => {
 
 export const getFabricManifest = () => {
   const url = `${FABRIC_APIS}/versions`;
+  return axios.get(url);
+};
+
+export const getLiteLoaderManifest = () => {
+  const url = `${LITELOADER_APIS}/versions/versions.json`;
   return axios.get(url);
 };
 

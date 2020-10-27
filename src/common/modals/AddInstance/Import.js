@@ -12,7 +12,7 @@ import { _getTempPath } from '../../utils/selectors';
 import { useSelector } from 'react-redux';
 import { getAddon, getAddonFiles } from '../../api';
 import { downloadFile } from '../../../app/desktop/utils/downloader';
-import { FABRIC, FORGE, VANILLA } from '../../utils/constants';
+import { FABRIC, FORGE, VANILLA, LITELOADER } from '../../utils/constants';
 import { transparentize } from 'polished';
 
 const Import = ({
