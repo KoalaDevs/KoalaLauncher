@@ -57,7 +57,7 @@ const InstanceName = ({
       if (
         !regex.test(instanceName || mcName) ||
         !finalWhiteSpace.test(instanceName || mcName) ||
-        (instanceName || mcName).length >= 35
+        (instanceName || mcName).length >= 45
       ) {
         setInvalidName(true);
         setAlreadyExists(false);
@@ -87,9 +87,9 @@ const InstanceName = ({
     const isVanilla = version[0] === VANILLA;
     const isFabric = version[0] === FABRIC;
     const isForge = version[0] === FORGE;
-    const isTwitchModpack = Boolean(modpack?.attachments);
+    const isCurseModpack = Boolean(modpack?.attachments);
     let manifest;
-    if (isTwitchModpack) {
+    if (isCurseModpack) {
       if (importZipPath) {
         manifest = await importAddonZip(
           importZipPath,

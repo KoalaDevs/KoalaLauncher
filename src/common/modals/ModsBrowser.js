@@ -15,9 +15,10 @@ import { Input, Select, Button } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useDebouncedCallback } from 'use-debounce';
 import { FixedSizeList as List } from 'react-window';
+import { FixedSizeGrid as Grid } from "react-window";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-regular-svg-icons';
-import { faBomb, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBomb, faCheck, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import Modal from '../components/Modal';
 import { getSearch, getAddonFiles } from '../api';
 import { openModal } from '../reducers/modals/actions';
@@ -28,8 +29,8 @@ import {
   getFirstPreferredCandidate,
   filterFabricFilesByVersion,
   filterForgeFilesByVersion,
-  getPatchedInstanceType
-} from '../../app/desktop/utils';
+  getPatchedInstanceType,
+} from "../../app/desktop/utils";
 
 const RowContainer = styled.div`
   display: flex;
@@ -116,7 +117,7 @@ const ModsListWrapper = ({
   const loadMoreItems = isNextPageLoading ? () => {} : loadNextPage;
 
   // Every row is loaded except for our loading indicator row.
-  const isItemLoaded = index => !hasNextPage || index < items.length;
+  const isItemLoaded = (index) => !hasNextPage || index < items.length;
 
   const innerElementType = forwardRef(({ style, ...rest }, ref) => (
     <div
@@ -293,7 +294,6 @@ const ModsListWrapper = ({
           innerElementType={innerElementType}
         >
           {Row}
-        </List>
       )}
     </InfiniteLoader>
   );
@@ -328,7 +328,6 @@ const ModsBrowser = ({ instanceName, gameVersion }) => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [error, setError] = useState(false);
   const instance = useSelector(state => _getInstance(state)(instanceName));
-
   const installedMods = instance?.mods;
 
   const [loadMoreModsDebounced] = useDebouncedCallback(
@@ -347,7 +346,7 @@ const ModsBrowser = ({ instanceName, gameVersion }) => {
     loadMoreMods();
   }, []);
 
-  const loadMoreMods = async (searchP = '', reset) => {
+  const loadMoreMods = async (searchP = "", reset) => {
     const reqObj = {};
     lastRequest = reqObj;
     if (!areModsLoading) {
@@ -424,7 +423,7 @@ const ModsBrowser = ({ instanceName, gameVersion }) => {
             `}
             placeholder="Search for a mod"
             value={searchQuery}
-            onChange={e => {
+            onChange={(e) => {
               setSearchQuery(e.target.value);
               loadMoreModsDebounced(e.target.value, true);
             }}
