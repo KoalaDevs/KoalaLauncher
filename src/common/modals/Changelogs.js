@@ -1,18 +1,19 @@
 /* eslint-disable react/no-unescaped-entities */
-import React, { memo, useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { Button } from 'antd';
-import { ipcRenderer } from 'electron';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDiscord } from '@fortawesome/free-brands-svg-icons';
-import Modal from '../components/Modal';
+import React, { memo, useState, useEffect } from "react";
+import styled from "styled-components";
+import { Button } from "antd";
+import { ipcRenderer } from "electron";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faDiscord } from "@fortawesome/free-brands-svg-icons";
+import Modal from "../components/Modal";
 
-const ChangeLogs = () => {
+const Changelogs = () => {
   const [version, setVersion] = useState(null);
 
   useEffect(() => {
-    ipcRenderer.invoke('getAppVersion').then(setVersion).catch(console.error);
+    ipcRenderer.invoke("getAppVersion").then(setVersion).catch(console.error);
   }, []);
+
   return (
     <Modal
       css={`
@@ -25,42 +26,53 @@ const ChangeLogs = () => {
         <Section>
           <SectionTitle
             css={`
-              color: ${props => props.theme.palette.colors.green};
+              color: ${(props) => props.theme.palette.colors.green};
             `}
           >
             <span>New Features</span>
           </SectionTitle>
           <div>
             <ul>
-              <li>Improved fabric according to dev guidelines</li>
+              <li>
+                Our logo now looks not squashed. Hope you can enjoy its quality
+                now.
+              </li>
+              <li>
+                The pesky mods/memory_repo folder where specific authors put
+                their core mods now will be blocked from exporting.
+              </li>
+              <li>
+                Whats a Twitch Mod, they are Curse Mods. Even before Overwolf
+                bought them.
+              </li>
             </ul>
           </div>
         </Section>
         <Section>
           <SectionTitle
             css={`
-              color: ${props => props.theme.palette.colors.red};
+              color: ${(props) => props.theme.palette.colors.red};
             `}
           >
             <span>Bug Fixes</span>
           </SectionTitle>
           <div>
             <ul>
-              <li>Minor UI fixes</li>
+              <li>Hopefully Fixed Linux Icons.</li>
             </ul>
           </div>
         </Section>
         <Section>
           <SectionTitle
             css={`
-              color: ${props => props.theme.palette.colors.lavander};
+              color: ${(props) => props.theme.palette.colors.lavander};
             `}
           >
             <span>Join Our Community</span>
           </SectionTitle>
           <p>
-            We love our users, that's why we have a dedicated Discord server
-            just to talk with all of them!
+            We <b>Really</b> love our users, that's why we have a dedicated
+            Discord server just to talk with all of them!
           </p>
           <Button
             css={`
@@ -71,7 +83,7 @@ const ChangeLogs = () => {
               margin-top: 20px;
             `}
             type="primary"
-            href="https://discord.gg/4cGYzen"
+            href="https://invite.gg/KoalaDevs"
           >
             <FontAwesomeIcon icon={faDiscord} />
             &nbsp; Discord
@@ -82,14 +94,14 @@ const ChangeLogs = () => {
   );
 };
 
-export default memo(ChangeLogs);
+export default memo(Changelogs);
 
 const Container = styled.div`
   width: 100%;
   height: 100%;
   text-align: center;
   overflow-y: auto;
-  color: ${props => props.theme.palette.text.primary};
+  color: ${(props) => props.theme.palette.text.primary};
 `;
 
 const SectionTitle = styled.h2`
@@ -100,7 +112,7 @@ const SectionTitle = styled.h2`
   margin: 10px 0 20px;
 
   span {
-    background: ${props => props.theme.palette.secondary.main};
+    background: ${(props) => props.theme.palette.secondary.main};
     padding: 0 10px;
   }
 `;

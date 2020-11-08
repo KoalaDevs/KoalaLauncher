@@ -1,9 +1,9 @@
-import { combineReducers } from 'redux';
-import * as ActionTypes from './actionTypes';
+import { combineReducers } from "redux";
+import * as ActionTypes from "./actionTypes";
 import {
   DEFAULT_JAVA_ARGS,
-  DEFAULT_MEMORY
-} from '../../../app/desktop/utils/constants';
+  DEFAULT_MEMORY,
+} from "../../../app/desktop/utils/constants";
 
 function sounds(state = true, action) {
   switch (action.type) {
@@ -70,6 +70,16 @@ function showNews(state = true, action) {
   }
 }
 
+// 1 is stable, 2 is beta, 3 is alpha
+function curseReleaseChannel(state = 1, action) {
+  switch (action.type) {
+    case ActionTypes.UPDATE_CURSE_RELEASE_CHANNEL:
+      return action.curseReleaseChannel;
+    default:
+      return state;
+  }
+}
+
 function minecraftSettings(
   state = { resolution: { height: 480, width: 854 } },
   action
@@ -78,7 +88,7 @@ function minecraftSettings(
     case ActionTypes.UPDATE_MINECRAFT_RESOLUTION:
       return {
         ...state,
-        resolution: { ...state.resolution, ...action.resolution }
+        resolution: { ...state.resolution, ...action.resolution },
       };
     default:
       return state;
@@ -89,7 +99,7 @@ function java(
   state = {
     path: null,
     memory: DEFAULT_MEMORY,
-    args: DEFAULT_JAVA_ARGS
+    args: DEFAULT_JAVA_ARGS,
   },
   action
 ) {
@@ -113,6 +123,7 @@ export default combineReducers({
   hideWindowOnGameLaunch,
   potatoPcMode,
   showNews,
+  curseReleaseChannel,
   java,
-  minecraftSettings
+  minecraftSettings,
 });

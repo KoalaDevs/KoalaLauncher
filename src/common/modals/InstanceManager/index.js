@@ -9,6 +9,7 @@ import Modal from '../../components/Modal';
 import Overview from './Overview';
 import { ipcRenderer } from 'electron';
 import Screenshots from './Screenshots';
+import ResourcePacks from './ResourcePacks';
 import Notes from './Notes';
 import Mods from './Mods';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -53,7 +54,9 @@ const SettingsButton = styled(({ active, ...props }) => <Button {...props} />)`
   transition: all 0.2s ease-in-out;
   white-space: nowrap;
   background: ${props =>
-    props.active ? props.theme.palette.grey[600] : props.theme.palette.grey[800]};
+    props.active
+      ? props.theme.palette.grey[600]
+      : props.theme.palette.grey[800]};
   border: 0px;
   text-align: left;
   color: ${props => props.theme.palette.text.primary};
@@ -142,7 +145,7 @@ const menuEntries = {
   mods: { name: 'Mods', component: Mods },
   modpack: { name: 'Modpack', component: Modpack },
   notes: { name: 'Notes', component: Notes },
-  // resourcePacks: { name: "Resource Packs", component: Overview },
+  resourcePacks: { name: 'Resource Packs', component: ResourcePacks },
   // worlds: { name: "Worlds", component: Overview },
   screenshots: { name: 'Screenshots', component: Screenshots }
   // settings: { name: "Settings", component: Overview },
@@ -155,6 +158,7 @@ const InstanceManager = ({ instanceName }) => {
   const [page, setPage] = useState(Object.keys(menuEntries)[0]);
   const instance = useSelector(state => _getInstance(state)(instanceName));
   const [background, setBackground] = useState(instance?.background);
+  const [manifest, setManifest] = useState(null);
   const ContentComponent = menuEntries[page].component;
 
   const updateBackground = v => {
@@ -200,6 +204,15 @@ const InstanceManager = ({ instanceName }) => {
 
   useEffect(() => {
     dispatch(clearLatestModManifests());
+  }, []);
+
+  useEffect(() => {
+    if ((instance?.modloader || []).slice(3, 5).length === 2) {
+      fse
+        .readJson(path.join(instancesPath, instanceName, 'manifest.json'))
+        .then(setManifest)
+        .catch(console.error);
+    }
   }, []);
 
   useEffect(() => {
@@ -265,6 +278,8 @@ const InstanceManager = ({ instanceName }) => {
           <ContentComponent
             instanceName={instanceName}
             modpackId={instance?.modloader[3]}
+            background={background}
+            manifest={manifest}
           />
         </Content>
       </Container>

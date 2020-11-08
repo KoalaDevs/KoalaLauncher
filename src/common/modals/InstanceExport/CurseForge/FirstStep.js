@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react';
-import dirTree from 'directory-tree';
-import path from 'path';
-import { Button, Input } from 'antd';
-import { Transition } from 'react-transition-group';
-import styled from 'styled-components';
-import { faFolder } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import ContinueButton from './ContinueButton';
+import React, { useEffect } from "react";
+import dirTree from "directory-tree";
+import path from "path";
+import { Button, Input } from "antd";
+import { Transition } from "react-transition-group";
+import styled from "styled-components";
+import { faFolder } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import ContinueButton from "./ContinueButton";
 
 const InlineBlock = styled.span`
   display: inline-block;
@@ -27,19 +27,22 @@ export default function FirstStep({
   packZipName,
   setPackZipName,
   setSelectedFiles,
-  inProp
+  inProp,
 }) {
   const fileBlackList = [
-    path.join(instancePath, 'config.json'),
-    path.join(instancePath, 'natives'),
-    path.join(instancePath, 'thumbnail.png'),
-    path.join(instancePath, 'usercache.json'),
-    path.join(instancePath, 'usernamecache.json'),
-    path.join(instancePath, 'logs'),
-    path.join(instancePath, '.mixin.out'),
-    path.join(instancePath, 'screenshots'),
-    path.join(instancePath, 'crash-reports'),
-    path.join(instancePath, 'manifest.json')
+    path.join(instancePath, "config.json"),
+    path.join(instancePath, "natives"),
+    path.join(instancePath, "thumbnail.png"),
+    path.join(instancePath, "usercache.json"),
+    path.join(instancePath, "usernamecache.json"),
+    path.join(instancePath, "logs"),
+    path.join(instancePath, ".mixin.out"),
+    path.join(instancePath, ".fabric"),
+    path.join(instancePath, "screenshots"),
+    path.join(instancePath, "backups"),
+    path.join(instancePath, "mods/memory_repo"),
+    path.join(instancePath, "crash-reports"),
+    path.join(instancePath, "manifest.json"),
   ];
 
   useEffect(() => {
@@ -47,13 +50,13 @@ export default function FirstStep({
     const getTreeData = async () => {
       const arr = dirTree(instancePath);
 
-      const flatDirArray = objectIn => {
+      const flatDirArray = (objectIn) => {
         const arrayResult = [];
         function innerObjectLoop(innerObject) {
           if (!innerObject || innerObject.length === 0) return;
           // eslint-disable-next-line array-callback-return
-          innerObject.map(child => {
-            if (fileBlackList.some(file => file === child.path)) return;
+          innerObject.map((child) => {
+            if (fileBlackList.some((file) => file === child.path)) return;
             arrayResult.push(child.path);
             innerObjectLoop(child.children);
           });
@@ -68,18 +71,19 @@ export default function FirstStep({
         const files = [];
         const dirs = [];
         // eslint-disable-next-line array-callback-return
-        children.map(child => {
+        children.map((child) => {
           const disableBool =
-            disableChildren || fileBlackList.some(file => file === child.path);
+            disableChildren ||
+            fileBlackList.some((file) => file === child.path);
           const childResult = {
             title: child.name,
             key: child.path,
             selectable: false,
             disableCheckbox: disableBool,
-            children: mapObject(child.children, disableBool)
+            children: mapObject(child.children, disableBool),
           };
-          if (child.type === 'file') files.push(childResult);
-          if (child.type === 'directory') dirs.push(childResult);
+          if (child.type === "file") files.push(childResult);
+          if (child.type === "directory") dirs.push(childResult);
         });
 
         function arrSort(innerArrayToSort) {
@@ -96,7 +100,7 @@ export default function FirstStep({
               }
               return 0;
             })
-            .map(el => {
+            .map((el) => {
               return innerArrayToSort[el.index];
             });
         }
@@ -110,12 +114,12 @@ export default function FirstStep({
             key: localPath,
             selectable: false,
             expanded: true,
-            children
-          }
+            children,
+          },
         ];
       }
       await setTreeData(
-        rootNode('Instance content', instancePath, mapObject(arr.children))
+        rootNode("Instance content", instancePath, mapObject(arr.children))
       );
       await setSelectedFiles(flatDirArray(arr.children));
     };
@@ -124,7 +128,7 @@ export default function FirstStep({
   }, [page]);
 
   function filePathDisplay() {
-    if (!filePath) return '';
+    if (!filePath) return "";
     let fileName = `${packZipName}-${packVersion}.zip`;
     if (fileName.length >= 25)
       fileName = `...${fileName.slice(fileName.length - 25)}`;
@@ -137,7 +141,7 @@ export default function FirstStep({
 
   return (
     <Transition in={inProp} timeout={200}>
-      {state => (
+      {(state) => (
         <Animation state={state}>
           <div
             css={`
@@ -194,7 +198,7 @@ export default function FirstStep({
                           css={`
                             width: 300px;
                           `}
-                          onChange={e => setPackZipName(e.target.value)}
+                          onChange={(e) => setPackZipName(e.target.value)}
                         />
                       </span>
                     </div>
@@ -218,7 +222,7 @@ export default function FirstStep({
                           css={`
                             width: 300px;
                           `}
-                          onChange={e => setPackVersion(e.target.value)}
+                          onChange={(e) => setPackVersion(e.target.value)}
                         />
                       </span>
                     </div>
@@ -246,7 +250,7 @@ export default function FirstStep({
                           css={`
                             width: 300px;
                           `}
-                          onChange={e => setPackAuthor(e.target.value)}
+                          onChange={(e) => setPackAuthor(e.target.value)}
                         />
                       </span>
                     </div>
@@ -301,6 +305,6 @@ const Animation = styled.div`
   height: 100%;
   will-change: transform;
   transform: translateX(
-    ${({ state }) => (state === 'exiting' || state === 'exited' ? -100 : 0)}%
+    ${({ state }) => (state === "exiting" || state === "exited" ? -100 : 0)}%
   );
 `;

@@ -1,30 +1,31 @@
-import React, { useState, useEffect, memo } from 'react';
-import styled from 'styled-components';
-import { Select, Button } from 'antd';
-import { useDispatch } from 'react-redux';
-import ReactHtmlParser from 'react-html-parser';
-import { getAddonFiles, getAddonFileChangelog } from '../../api';
-import { changeModpackVersion } from '../../reducers/actions';
-import { closeModal } from '../../reducers/modals/actions';
+import React, { useState, useEffect, memo } from "react";
+import styled from "styled-components";
+import { Select, Button } from "antd";
+import { useDispatch } from "react-redux";
+import ReactHtmlParser from "react-html-parser";
+import { getAddonFiles, getAddonFileChangelog } from "../../api";
+import { changeModpackVersion } from "../../reducers/actions";
+import { closeModal } from "../../reducers/modals/actions";
 
-const Modpack = ({ modpackId, instanceName }) => {
+const Modpack = ({ modpackId, instanceName, manifest }) => {
   const [files, setFiles] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [installing, setInstalling] = useState(false);
   const dispatch = useDispatch();
 
   const initData = async () => {
     setLoading(true);
     const { data } = await getAddonFiles(modpackId);
     const mappedFiles = await Promise.all(
-      data.map(async v => {
+      data.map(async (v) => {
         const { data: changelog } = await getAddonFileChangelog(
           modpackId,
           v.id
         );
         return {
           ...v,
-          changelog
+          changelog,
         };
       })
     );
@@ -36,13 +37,13 @@ const Modpack = ({ modpackId, instanceName }) => {
     initData();
   }, []);
 
-  const getReleaseType = id => {
+  const getReleaseType = (id) => {
     switch (id) {
       case 1:
         return (
           <span
             css={`
-              color: ${props => props.theme.palette.colors.green};
+              color: ${(props) => props.theme.palette.colors.green};
             `}
           >
             [Stable]
@@ -52,7 +53,7 @@ const Modpack = ({ modpackId, instanceName }) => {
         return (
           <span
             css={`
-              color: ${props => props.theme.palette.colors.yellow};
+              color: ${(props) => props.theme.palette.colors.yellow};
             `}
           >
             [Beta]
@@ -63,7 +64,7 @@ const Modpack = ({ modpackId, instanceName }) => {
         return (
           <span
             css={`
-              color: ${props => props.theme.palette.colors.red};
+              color: ${(props) => props.theme.palette.colors.red};
             `}
           >
             [Alpha]
@@ -72,10 +73,11 @@ const Modpack = ({ modpackId, instanceName }) => {
     }
   };
 
-  const handleChange = value => setSelectedIndex(value);
+  const handleChange = (value) => setSelectedIndex(value);
 
   return (
     <Container>
+      Installed version: {manifest?.name} - {manifest?.version}
       <div
         css={`
           display: flex;
@@ -83,7 +85,7 @@ const Modpack = ({ modpackId, instanceName }) => {
         `}
       >
         <StyledSelect
-          placeholder={loading ? 'Loading Versions' : 'Select a version'}
+          placeholder={loading ? "Loading Versions" : "Select a version"}
           onChange={handleChange}
           listItemHeight={50}
           listHeight={400}
@@ -127,9 +129,9 @@ const Modpack = ({ modpackId, instanceName }) => {
                 >
                   <div>
                     {new Date(file.fileDate).toLocaleDateString(undefined, {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
                     })}
                   </div>
                 </div>
@@ -144,11 +146,16 @@ const Modpack = ({ modpackId, instanceName }) => {
           ReactHtmlParser(files[selectedIndex]?.changelog)}
       </Changelog>
       <Button
+        loading={installing}
         type="primary"
         disabled={selectedIndex === null}
-        onClick={() => {
+        onClick={async () => {
+          setInstalling(true);
+          await dispatch(
+            changeModpackVersion(instanceName, files[selectedIndex])
+          );
+          setInstalling(false);
           dispatch(closeModal());
-          dispatch(changeModpackVersion(instanceName, files[selectedIndex]));
         }}
       >
         Switch Version
@@ -196,7 +203,7 @@ const Changelog = styled.div`
   perspective: 1px;
   transform-style: preserve-3d;
   height: calc(100% - 160px);
-  background: ${props => props.theme.palette.grey[900]};
+  background: ${(props) => props.theme.palette.grey[900]};
   width: calc(100% - 80px);
   word-break: break-all;
   overflow-x: hidden;
@@ -204,6 +211,9 @@ const Changelog = styled.div`
   margin: 20px 40px;
   padding: 20px;
   font-size: 20px;
+  * {
+    color: ${(props) => props.theme.palette.text.primary} !important;
+  }
   & > div:first-child {
     font-size: 24px;
     width: 100%;

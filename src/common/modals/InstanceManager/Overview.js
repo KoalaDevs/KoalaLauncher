@@ -1,23 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import fss from 'fs-extra';
-
-import path from 'path';
-
-import omit from 'lodash/omit';
-import { useDebouncedCallback } from 'use-debounce';
-import styled from 'styled-components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faUndo } from '@fortawesome/free-solid-svg-icons';
-import { Input, Button, Switch, Slider, Select } from 'antd';
-import { ipcRenderer } from 'electron';
-import { _getInstancesPath, _getInstance } from '../../utils/selectors';
+import React, { useState, useEffect, memo } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import fss from "fs-extra";
+import path from "path";
+import omit from "lodash/omit";
+import { useDebouncedCallback } from "use-debounce";
+import styled from "styled-components";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSave, faUndo, faCog } from "@fortawesome/free-solid-svg-icons";
+import { Input, Button, Switch, Slider, Select } from "antd";
+import { ipcRenderer } from "electron";
+import { _getInstancesPath, _getInstance } from "../../utils/selectors";
+import instanceDefaultBackground from "../../assets/instance_default.png";
 import {
   DEFAULT_JAVA_ARGS,
-  resolutionPresets
-} from '../../../app/desktop/utils/constants';
-import { updateInstanceConfig } from '../../reducers/actions';
-import { convertMinutesToHumanTime } from '../../utils';
+  resolutionPresets,
+} from "../../../app/desktop/utils/constants";
+import { updateInstanceConfig } from "../../reducers/actions";
+import { openModal } from "../../reducers/modals/actions";
+import { convertMinutesToHumanTime } from "../../utils";
 
 const Container = styled.div`
   padding: 0 50px;
@@ -32,8 +32,8 @@ const RenameRow = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  color: ${props => props.theme.palette.text.primary};
-  margin: 30px 0 30px 0;
+  color: ${(props) => props.theme.palette.text.primary};
+  margin: 60px 0 30px 0;
   width: 100%;
 `;
 
@@ -45,8 +45,8 @@ const CardBox = styled.div`
   flex: 1;
   height: 60px;
   font-weight: 500;
-  border-radius: ${props => props.theme.shape.borderRadius};
-  color: ${props => props.theme.palette.text.primary};
+  border-radius: ${(props) => props.theme.shape.borderRadius};
+  color: ${(props) => props.theme.palette.text.primary};
   display: flex;
   justify-content: center;
   align-items: center;
@@ -76,8 +76,8 @@ const JavaManagerRow = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  color: ${props => props.theme.palette.text.primary};
-  margin: 0 500px 30px 0;
+  color: ${(props) => props.theme.palette.text.primary};
+  margin: 0 500px 20px 0;
   width: 100%;
 `;
 
@@ -106,15 +106,65 @@ const ResolutionInputContainer = styled.div`
 `;
 
 const marks = {
-  2048: '2048 MB',
-  4096: '4096 MB',
-  8192: '8192 MB',
-  16384: '16384 MB'
+  2048: "2048 MB",
+  4096: "4096 MB",
+  8192: "8192 MB",
+  16384: "16384 MB",
 };
 
-const Overview = ({ instanceName }) => {
+const Card = memo(
+  ({ title, children, color, icon, instanceName, defaultValue }) => {
+    const dispatch = useDispatch();
+    return (
+      <CardBox
+        css={`
+          background: ${color};
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+        `}
+      >
+        <div
+          css={`
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            font-size: 10px;
+            color: ${(props) => props.theme.palette.text.secondary};
+          `}
+        >
+          {title}
+        </div>
+
+        {icon && (
+          <div
+            css={`
+              position: absolute;
+              top: 5px;
+              right: 10px;
+              font-size: 10px;
+              color: ${(props) => props.theme.palette.text.secondary};
+              cursor: pointer;
+            `}
+            onClick={() => {
+              dispatch(
+                openModal("McVersionChanger", { instanceName, defaultValue })
+              );
+            }}
+          >
+            {icon}
+          </div>
+        )}
+
+        <div>{children}</div>
+      </CardBox>
+    );
+  }
+);
+
+const Overview = ({ instanceName, background, manifest }) => {
   const instancesPath = useSelector(_getInstancesPath);
-  const config = useSelector(state => _getInstance(state)(instanceName));
+  const config = useSelector((state) => _getInstance(state)(instanceName));
   const [JavaMemorySwitch, setJavaMemorySwitch] = useState(
     config?.javaMemory !== undefined
   );
@@ -134,40 +184,40 @@ const Overview = ({ instanceName }) => {
 
   useEffect(() => {
     ipcRenderer
-      .invoke('getAllDisplaysBounds')
+      .invoke("getAllDisplaysBounds")
       .then(setScreenResolution)
       .catch(console.error);
   }, []);
 
-  const updateJavaMemory = v => {
+  const updateJavaMemory = (v) => {
     dispatch(
-      updateInstanceConfig(instanceName, prev => ({
+      updateInstanceConfig(instanceName, (prev) => ({
         ...prev,
-        javaMemory: v
+        javaMemory: v,
       }))
     );
   };
 
-  const updateJavaArguments = v => {
+  const updateJavaArguments = (v) => {
     dispatch(
-      updateInstanceConfig(instanceName, prev => ({
+      updateInstanceConfig(instanceName, (prev) => ({
         ...prev,
-        javaArgs: v
+        javaArgs: v,
       }))
     );
   };
 
   const updateGameResolution = (w, h) => {
     dispatch(
-      updateInstanceConfig(instanceName, prev => ({
+      updateInstanceConfig(instanceName, (prev) => ({
         ...prev,
-        resolution: { height: h, width: w }
+        resolution: { height: h, width: w },
       }))
     );
   };
 
   const [debouncedArgumentsUpdate] = useDebouncedCallback(
-    v => {
+    (v) => {
       updateJavaArguments(v);
     },
     400,
@@ -186,20 +236,20 @@ const Overview = ({ instanceName }) => {
     );
   };
 
-  const computeLastPlayed = timestamp => {
+  const computeLastPlayed = (timestamp) => {
     const lastPlayed = new Date(timestamp);
     const timeDiff = lastPlayed.getTime() - new Date(Date.now()).getTime();
     const diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
     switch (diffDays) {
       case 0:
-        return 'Today';
+        return "Today";
       case -1:
-        return 'Yesterday';
+        return "Yesterday";
       default:
         return lastPlayed.toLocaleDateString(undefined, {
-          year: 'numeric',
-          month: 'numeric',
-          day: 'numeric'
+          year: "numeric",
+          month: "numeric",
+          day: "numeric",
         });
     }
   };
@@ -211,136 +261,73 @@ const Overview = ({ instanceName }) => {
           css={`
             display: flex;
             justify-content: space-between;
-            width: 100%;
+            width: 100% + 20px;
             margin-top: 20px;
+            margin-left: -20px;
           `}
         >
-          <CardBox
-            css={`
-              background: ${props => props.theme.palette.colors.jungleGreen};
-            `}
+          <Card
+            title="Minecraft Version"
+            color={(props) => props.theme.palette.colors.darkYellow}
+            instanceName={instanceName}
+            defaultValue={config?.modloader}
+            icon={<FontAwesomeIcon icon={faCog} />}
           >
-            <div
-              css={`
-                position: absolute;
-                top: 5px;
-                left: 10px;
-                font-size: 10px;
-                color: ${props => props.theme.palette.text.secondary};
-              `}
-            >
-              Minecraft Version
-            </div>
-            <div>{config?.modloader[1]}</div>
-          </CardBox>
-          <CardBox
-            css={`
-              background: ${props => props.theme.palette.colors.darkYellow};
-            `}
-          >
-            <div
-              css={`
-                position: absolute;
-                top: 5px;
-                left: 10px;
-                font-size: 10px;
-                color: ${props => props.theme.palette.text.secondary};
-              `}
-            >
-              Modloader
-            </div>
-            <div>{config?.modloader[0]}</div>
-          </CardBox>
-          <CardBox
-            css={`
-              background: ${props => props.theme.palette.colors.lightBlue};
-            `}
-          >
-            <div
-              css={`
-                position: absolute;
-                top: 5px;
-                left: 10px;
-                font-size: 10px;
-                color: ${props => props.theme.palette.text.secondary};
-              `}
-            >
-              Modloader Version
-            </div>
-            <div>
-              {config?.modloader[0] === 'forge'
-                ? config?.modloader[2]?.split('-')[1]
-                : config?.modloader[2] || '-'}
-            </div>
-          </CardBox>
+            {config?.modloader[0] === "vanilla" ? "Vanilla " : ""}
+            {config?.modloader[0] === "fabric" ? "Fabric " : ""}
+            {config?.modloader[0] === "forge" ? "Forge " : ""}
+            {config?.modloader[1]}
+            {config?.modloader[0] === "fabric" ? " - " : ""}
+            {config?.modloader[0] === "fabric"
+              ? config?.modloader[2] || "-"
+              : ""}
+            {config?.modloader[0] === "forge" ? " - " : ""}
+            {config?.modloader[0] === "forge"
+              ? config?.modloader[2]?.split("-")[1]
+              : ""}
+          </Card>
         </OverviewCard>
         <OverviewCard
           css={`
             display: flex;
             justify-content: space-between;
             width: 100%;
-            margin-bottom: 60px;
+            margin-bottom: 30px;
           `}
         >
-          <CardBox
-            css={`
-              background: ${props => props.theme.palette.colors.maximumRed};
-            `}
+          <Card
+            title="Mod Count"
+            color={(props) => props.theme.palette.colors.maximumRed}
           >
-            <div
-              css={`
-                position: absolute;
-                top: 5px;
-                left: 10px;
-                font-size: 10px;
-                color: ${props => props.theme.palette.text.secondary};
-              `}
-            >
-              Mods
-            </div>
-            <div>{config?.mods?.length || '-'}</div>
-          </CardBox>
-          <CardBox
-            css={`
-              background: ${props => props.theme.palette.colors.liberty};
-            `}
+            {config?.mods?.length || "-"}
+          </Card>
+          <Card
+            title="Played Time"
+            color={(props) => props.theme.palette.colors.liberty}
           >
-            <div
-              css={`
-                position: absolute;
-                top: 5px;
-                left: 10px;
-                font-size: 10px;
-                color: ${props => props.theme.palette.text.secondary};
-              `}
-            >
-              Played Time
-            </div>
-            <div>{convertMinutesToHumanTime(config?.timePlayed)}</div>
-          </CardBox>
-          <CardBox
-            css={`
-              background: ${props => props.theme.palette.colors.orange};
-            `}
+            {convertMinutesToHumanTime(config?.timePlayed)}
+          </Card>
+          <Card
+            title="Last Played"
+            color={(props) => props.theme.palette.colors.orange}
           >
-            <div
-              css={`
-                position: absolute;
-                top: 5px;
-                left: 10px;
-                font-size: 10px;
-                color: ${props => props.theme.palette.text.secondary};
-              `}
-            >
-              Last Played
-            </div>
-            <div>
-              {config?.lastPlayed ? computeLastPlayed(config?.lastPlayed) : '-'}
-            </div>
-          </CardBox>
+            {config?.lastPlayed ? computeLastPlayed(config?.lastPlayed) : "-"}
+          </Card>
         </OverviewCard>
+        {config?.modloader.slice(3, 5).length === 2 && manifest && (
+          <Card
+            title="CurseForge Modpack"
+            color={`linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), ${
+              background
+                ? `url(${background})`
+                : `url(${instanceDefaultBackground})`
+            }`}
+          >
+            {manifest?.name} - {manifest?.version}
+          </Card>
+        )}
         <RenameRow>
-          <Input value={newName} onChange={e => setNewName(e.target.value)} />
+          <Input value={newName} onChange={(e) => setNewName(e.target.value)} />
           <RenameButton onClick={() => renameInstance()} type="primary">
             Rename&nbsp;
             <FontAwesomeIcon icon={faSave} />
@@ -351,13 +338,13 @@ const Overview = ({ instanceName }) => {
             <div>Override Game Resolution</div>
             <Switch
               checked={height && width}
-              onChange={v => {
+              onChange={(v) => {
                 if (!v) {
                   setHeight(null);
                   setWidth(null);
                   dispatch(
-                    updateInstanceConfig(instanceName, prev =>
-                      omit(prev, ['resolution'])
+                    updateInstanceConfig(instanceName, (prev) =>
+                      omit(prev, ["resolution"])
                     )
                   );
                 } else {
@@ -374,16 +361,16 @@ const Overview = ({ instanceName }) => {
                 <Input
                   placeholder="Width"
                   value={width}
-                  onChange={e => {
+                  onChange={(e) => {
                     const w = parseInt(e.target.value, 10) || 854;
                     setWidth(w);
                     dispatch(
-                      updateInstanceConfig(instanceName, prev => ({
+                      updateInstanceConfig(instanceName, (prev) => ({
                         ...prev,
                         resolution: {
                           height,
-                          width: w
-                        }
+                          width: w,
+                        },
                       }))
                     );
                   }}
@@ -392,16 +379,16 @@ const Overview = ({ instanceName }) => {
                 <Input
                   placeholder="Height"
                   value={height}
-                  onChange={e => {
+                  onChange={(e) => {
                     const h = parseInt(e.target.value, 10) || 480;
                     setHeight(h);
                     dispatch(
-                      updateInstanceConfig(instanceName, prev => ({
+                      updateInstanceConfig(instanceName, (prev) => ({
                         ...prev,
                         resolution: {
                           height: h,
-                          width
-                        }
+                          width,
+                        },
                       }))
                     );
                   }}
@@ -409,28 +396,28 @@ const Overview = ({ instanceName }) => {
               </div>
               <Select
                 placeholder="Presets"
-                onChange={v => {
-                  const w = parseInt(v.split('x')[0], 10);
-                  const h = parseInt(v.split('x')[1], 10);
+                onChange={(v) => {
+                  const w = parseInt(v.split("x")[0], 10);
+                  const h = parseInt(v.split("x")[1], 10);
                   setHeight(h);
                   setWidth(w);
                   dispatch(
-                    updateInstanceConfig(instanceName, prev => ({
+                    updateInstanceConfig(instanceName, (prev) => ({
                       ...prev,
                       resolution: {
                         height: h,
-                        width: w
-                      }
+                        width: w,
+                      },
                     }))
                   );
                 }}
               >
-                {resolutionPresets.map(v => {
-                  const w = parseInt(v.split('x')[0], 10);
-                  const h = parseInt(v.split('x')[1], 10);
+                {resolutionPresets.map((v) => {
+                  const w = parseInt(v.split("x")[0], 10);
+                  const h = parseInt(v.split("x")[1], 10);
 
                   const isBiggerThanScreen = (screenResolution || []).every(
-                    bounds => {
+                    (bounds) => {
                       return bounds.width < w || bounds.height < h;
                     }
                   );
@@ -444,13 +431,13 @@ const Overview = ({ instanceName }) => {
             <div>Override Java Memory</div>
             <Switch
               checked={JavaMemorySwitch}
-              onChange={v => {
+              onChange={(v) => {
                 setJavaMemorySwitch(v);
 
                 if (!v) {
                   dispatch(
-                    updateInstanceConfig(instanceName, prev =>
-                      omit(prev, ['javaMemory'])
+                    updateInstanceConfig(instanceName, (prev) =>
+                      omit(prev, ["javaMemory"])
                     )
                   );
                 } else if (v) {
@@ -478,13 +465,13 @@ const Overview = ({ instanceName }) => {
             <div>Override Java Arguments</div>
             <Switch
               checked={JavaArgumentsSwitch}
-              onChange={v => {
+              onChange={(v) => {
                 setJavaArgumentsSwitch(v);
 
                 if (!v) {
                   dispatch(
-                    updateInstanceConfig(instanceName, prev =>
-                      omit(prev, ['javaArgs'])
+                    updateInstanceConfig(instanceName, (prev) =>
+                      omit(prev, ["javaArgs"])
                     )
                   );
                 } else if (v) {
@@ -497,7 +484,7 @@ const Overview = ({ instanceName }) => {
             <JavaManagerRow>
               <Input
                 value={javaLocalArguments}
-                onChange={e => {
+                onChange={(e) => {
                   setJavaLocalArguments(e.target.value);
                   debouncedArgumentsUpdate(e.target.value);
                 }}
