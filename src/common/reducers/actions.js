@@ -767,7 +767,7 @@ export function downloadFabric(instanceName) {
     const state = getState();
     const { modloader } = _getCurrentDownloadItem(state);
 
-    dispatch(updateDownloadStatus(instanceName, "Downloading fabric files..."));
+    dispatch(updateDownloadStatus(instanceName, "Downloading Fabric Files..."));
 
     let fabricJson;
     const fabricJsonPath = path.join(
@@ -870,7 +870,7 @@ export function downloadForge(instanceName) {
         "No installer found in temp or hash mismatch. Need to download it."
       );
       dispatch(
-        updateDownloadStatus(instanceName, "Downloading forge installer...")
+        updateDownloadStatus(instanceName, "Downloading Forge Installer...")
       );
 
       let urlTerminal = "installer.jar";
@@ -957,7 +957,7 @@ export function downloadForge(instanceName) {
       }
 
       dispatch(
-        updateDownloadStatus(instanceName, "Downloading forge libraries...")
+        updateDownloadStatus(instanceName, "Downloading Forge Libraries...")
       );
 
       let { libraries } = forgeJson.version;
@@ -987,7 +987,7 @@ export function downloadForge(instanceName) {
 
       // Patching
       if (forgeJson.install?.processors?.length) {
-        dispatch(updateDownloadStatus(instanceName, "Patching forge..."));
+        dispatch(updateDownloadStatus(instanceName, "Patching Forge..."));
 
         // Extract client.lzma from installer
 
@@ -1056,7 +1056,7 @@ export function downloadForge(instanceName) {
         { concurrency: state.settings.concurrentDownloads }
       );
 
-      dispatch(updateDownloadStatus(instanceName, "Injecting forge..."));
+      dispatch(updateDownloadStatus(instanceName, "Injecting Forge..."));
       dispatch(updateDownloadProgress(0));
 
       // Perform forge injection
@@ -1135,7 +1135,7 @@ export function processManifest(instanceName) {
     const { manifest } = _getCurrentDownloadItem(state);
     const concurrency = state.settings.concurrentDownloads;
 
-    dispatch(updateDownloadStatus(instanceName, "Downloading mods..."));
+    dispatch(updateDownloadStatus(instanceName, "Downloading Mods..."));
 
     let modManifests = [];
     await pMap(
@@ -1182,7 +1182,7 @@ export function processManifest(instanceName) {
       { concurrency }
     );
 
-    dispatch(updateDownloadStatus(instanceName, "Copying overrides..."));
+    dispatch(updateDownloadStatus(instanceName, "Copying Overrides..."));
     const addonPathZip = path.join(
       _getTempPath(state),
       instanceName,
@@ -1216,7 +1216,7 @@ export function processManifest(instanceName) {
       });
     });
 
-    dispatch(updateDownloadStatus(instanceName, "Finalizing overrides..."));
+    dispatch(updateDownloadStatus(instanceName, "Finalizing Overrides..."));
 
     const overrideFiles = await getFilesRecursive(
       path.join(_getTempPath(state), instanceName, "overrides")
@@ -1280,7 +1280,7 @@ export function downloadInstance(instanceName) {
       },
     } = state;
 
-    dispatch(updateDownloadStatus(instanceName, "Downloading game files..."));
+    dispatch(updateDownloadStatus(instanceName, "Downloading Game Files..."));
 
     const { modloader, manifest } = _getCurrentDownloadItem(state);
     const mcVersion = modloader[1];

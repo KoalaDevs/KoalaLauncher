@@ -311,6 +311,7 @@ const Row = memo(({ index, style, data }) => {
   const name = item.fileName
     .replace(".jar", "")
     .replace(".zip", "")
+    .replace(".litemod", "")
     .replace(".disabled", "");
 
   return (

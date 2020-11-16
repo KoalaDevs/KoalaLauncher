@@ -23,9 +23,10 @@ const InstanceDeleteConfirmation = ({ instanceName }) => {
 
   const deleteInstance = async () => {
     setLoading(true);
-    start();
     fse.remove(path.join(instancesPath, instanceName));
+    closeModalWindow();
   };
+
   const closeModalWindow = () => dispatch(closeModal());
   return (
     <Modal

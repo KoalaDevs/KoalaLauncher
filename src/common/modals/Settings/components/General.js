@@ -597,13 +597,14 @@ const General = () => {
           `}
         >
           Deletes all the shared files between instances. Doing this will result
-          in the complete loss of the instances data
+          in the complete loss of instances data
         </p>
         <Button
           onClick={() => {
             dispatch(
               openModal("ActionConfirmation", {
-                message: "Are you sure you want to delete shared data?",
+                message:
+                  "Are you sure you want to delete shared data? This will result in the complete loss of instance data",
                 confirmCallback: clearSharedData,
                 title: "Confirm",
               })

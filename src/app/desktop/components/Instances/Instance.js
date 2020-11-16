@@ -275,7 +275,7 @@ const Instance = ({ instanceName }) => {
                   </div>
                 )}
                 {isInQueue && "In Queue"}
-                {instanceName}
+                {!isInQueue && instanceName}
                 <TimePlayed>
                   <FontAwesomeIcon
                     icon={faClock}
@@ -284,9 +284,12 @@ const Instance = ({ instanceName }) => {
                     `}
                   />
 
-                  {convertMinutesToHumanTime(instance.timePlayed)}
+                  {!isInQueue && convertMinutesToHumanTime(instance.timePlayed)}
                 </TimePlayed>
-                <MCVersion>Minecraft {(instance.modloader || [])[1]}</MCVersion>
+                <MCVersion>
+                  {!isInQueue && "Minecraft "}
+                  {!isInQueue && (instance.modloader || [])[1]}
+                </MCVersion>
               </>
             )}
           </HoverContainer>
