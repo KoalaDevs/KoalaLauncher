@@ -696,11 +696,11 @@ export const patchForge113 = async (
           console.error(`ps stderr: ${data}`);
         });
 
-        ps.on("close", (code) => {
-          if (code !== 0) {
-            console.log(`process exited with code ${code}`);
-            resolve();
+        ps.on('close', code => {
+          if (!ps.killed) {
+            ps.kill('SIGKILL');
           }
+          console.log(`process exited with code ${code}`);
           resolve();
         });
       });

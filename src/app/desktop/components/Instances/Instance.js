@@ -200,18 +200,20 @@ const Instance = ({ instanceName }) => {
   const manageInstance = () => {
     dispatch(openModal("InstanceManager", { instanceName }));
   };
+  const showInstanceConsole = () => {
+    ipcRenderer.invoke('showInstanceConsole', isPlaying.pid, instanceName);
+  };
   const instanceExportCurseForge = () => {
     dispatch(openModal("InstanceExportCurseForge", { instanceName }));
   };
   const killProcess = () => {
-    console.log(isPlaying.pid);
     psTree(isPlaying.pid, (err, children) => {
       if (children.length) {
-        children.forEach((el) => {
-          process.kill(el.PID);
+        children.forEach(el => {
+          process.kill(el.PID, 'SIGKILL');
         });
       } else {
-        process.kill(isPlaying.pid);
+        process.kill(isPlaying.pid, 'SIGKILL');
       }
     });
   };
@@ -331,6 +333,15 @@ const Instance = ({ instanceName }) => {
               `}
             />
             Open Folder
+          </MenuItem>
+          <MenuItem onClick={showInstanceConsole}>
+            <FontAwesomeIcon
+              icon={faWrench}
+              css={`
+                margin-right: 10px;
+              `}
+            />
+            Show Console
           </MenuItem>
 
           {/* // TODO - Support other export options besides curseforge forge. */}

@@ -8,16 +8,20 @@ const {
   shell,
   screen,
   globalShortcut,
-  nativeImage,
-} = require("electron");
-const path = require("path");
-const { spawn, exec } = require("child_process");
-const { autoUpdater } = require("electron-updater");
-const nsfw = require("nsfw");
-const murmur = require("murmur2-calculator");
-const log = require("electron-log");
-const fss = require("fs");
-const { promisify } = require("util");
+  nativeImage
+} = require('electron');
+const path = require('path');
+const { spawn, exec } = require('child_process');
+const { autoUpdater } = require('electron-updater');
+const nsfw = require('nsfw');
+const murmur = require('murmur2-calculator');
+const log = require('electron-log');
+const fss = require('fs');
+const { promisify } = require('util');
+const querystring = require('querystring');
+const fse = require('fs-extra');
+const { omit } = require('lodash');
+const { parseAnsi } = require('ansi-color-parse');
 
 const fs = fss.promises;
 
@@ -33,34 +37,12 @@ if (!gotTheLock) {
 // This gets rid of this: https://github.com/electron/electron/issues/13186
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = true;
 // app.commandLine.appendSwitch("disable-web-security");
-app.commandLine.appendSwitch("disable-gpu-vsync=gpu");
-app.commandLine.appendSwitch("disable-features", "OutOfBlinkCors");
-
-const edit = {
-  label: "Edit",
-  submenu: [
-    {
-      label: "Cut",
-      accelerator: "CmdOrCtrl+X",
-      selector: "cut:",
-    },
-    {
-      label: "Copy",
-      accelerator: "CmdOrCtrl+C",
-      selector: "copy:",
-    },
-    {
-      label: "Paste",
-      accelerator: "CmdOrCtrl+V",
-      selector: "paste:",
-    },
-    {
-      label: "Select All",
-      accelerator: "CmdOrCtrl+A",
-      selector: "selectAll:",
-    },
-  ],
-};
+app.commandLine.appendSwitch('disable-gpu-vsync=gpu');
+app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
+app.commandLine.appendSwitch(
+  'js-flags',
+  '--expose_gc --max-old-space-size=128'
+);
 
 // app.allowRendererProcessReuse = true;
 Menu.setApplicationMenu(Menu.buildFromTemplate([edit]));
@@ -94,6 +76,13 @@ if (releaseChannelExists) {
   if (releaseId === 1) {
     allowUnstableReleases = true;
   }
+}
+
+const lowSpecs = fss.existsSync(path.join(app.getPath('userData'), 'lowSpecs'));
+if (lowSpecs) {
+  app.commandLine.appendSwitch('disable-software-rasterizer');
+  app.commandLine.appendSwitch('in-process-gpu');
+  app.disableHardwareAcceleration();
 }
 
 if (
@@ -155,8 +144,48 @@ async function extract7z() {
 extract7z();
 
 let mainWindow;
-let tray;
 let watcher;
+let tray;
+let startedInstances = {};
+
+function createTrayIcon() {
+  const RESOURCE_DIR = isDev ? __dirname : path.join(__dirname, '../build');
+
+  const iconPath = path.join(RESOURCE_DIR, 'logo_32x32.png');
+
+  const nimage = nativeImage.createFromPath(iconPath);
+
+  if (tray) {
+    tray.destroy();
+    tray = null;
+  }
+
+  tray = new Tray(nimage);
+  const trayMenuTemplate = [
+    {
+      label: 'GDLauncher',
+      enabled: false
+    },
+    {
+      label: 'Show Dev Tools',
+      click: () => mainWindow.webContents.openDevTools()
+    }
+  ];
+
+  const trayMenu = Menu.buildFromTemplate(trayMenuTemplate);
+  tray.setContextMenu(trayMenu);
+  tray.setToolTip('GDLauncher');
+  tray.on('double-click', () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+    } else {
+      createWindow();
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -212,29 +241,6 @@ function createWindow() {
     }
   );
 
-  const RESOURCE_DIR = isDev ? __dirname : path.join(__dirname, "../build");
-
-  const iconPath = path.join(RESOURCE_DIR, "logo_32x32.png");
-
-  const nimage = nativeImage.createFromPath(iconPath);
-
-  tray = new Tray(nimage);
-  const trayMenuTemplate = [
-    {
-      label: "KoalaLauncher",
-      enabled: false,
-    },
-    {
-      label: "Show Dev Tools",
-      click: () => mainWindow.webContents.openDevTools(),
-    },
-  ];
-
-  const trayMenu = Menu.buildFromTemplate(trayMenuTemplate);
-  tray.setContextMenu(trayMenu);
-  tray.setToolTip("KoalaLauncher");
-  tray.on("double-click", () => mainWindow.show());
-
   mainWindow.loadURL(
     isDev
       ? "http://localhost:3000"
@@ -255,6 +261,8 @@ function createWindow() {
     mainWindow.webContents.send("window-minimized");
   });
 
+  createTrayIcon();
+
   const handleRedirect = (e, url) => {
     if (url !== mainWindow.webContents.getURL()) {
       e.preventDefault();
@@ -262,18 +270,161 @@ function createWindow() {
     }
   };
 
-  mainWindow.webContents.on("will-navigate", handleRedirect);
-  mainWindow.webContents.on("new-window", handleRedirect);
+  mainWindow.webContents.on('will-navigate', handleRedirect);
+  mainWindow.webContents.on('new-window', handleRedirect);
+  return mainWindow;
 }
 
-app.on("ready", createWindow);
+function createConsoleWindow(instanceName, pid, show) {
+  startedInstances[pid].console = new BrowserWindow({
+    width: 500,
+    height: 700,
+    show,
+    frame: false,
+    backgroundColor: '#1B2533',
+    webPreferences: {
+      experimentalFeatures: true,
+      nodeIntegration: true,
+      // Disable in dev since I think hot reload is messing with it
+      webSecurity: !isDev
+    }
+  });
+
+  const queryData = querystring.encode({ instanceName, pid });
+
+  startedInstances[pid].console.loadURL(
+    isDev
+      ? `file://${path.join(__dirname, `../public/console.html?${queryData}`)}`
+      : `file://${path.join(__dirname, `../build/console.html?${queryData}`)}`
+  );
+
+  startedInstances[pid].console.on('close', () => {
+    if (startedInstances[pid]) {
+      startedInstances[pid].console = null;
+    }
+  });
+
+  startedInstances[pid].console.webContents.once('dom-ready', () => {
+    if (startedInstances[pid].logs) {
+      // eslint-disable-next-line array-callback-return
+      startedInstances[pid].logs.map(v => {
+        startedInstances[pid].console.webContents.send('log-data', v);
+      });
+    }
+  });
+
+  ipcMain.handleOnce(`closeConsole-${pid}`, () => {
+    startedInstances[pid].console.close();
+    startedInstances[pid].console = null;
+  });
+}
+
+function initializeInstance(
+  instanceName,
+  javaPath,
+  jvmArguments,
+  instanceJLFPath,
+  symLinkDirPath
+) {
+  const instancesPath = path.join(app.getPath('userData'), 'instances');
+  const ps = spawn(javaPath, jvmArguments, {
+    cwd: path.join(instancesPath, instanceName),
+    shell: true
+  });
+  startedInstances[ps.pid] = { instanceName, playedTime: 0, logs: [] };
+
+  const playTimer = setInterval(async () => {
+    if (!mainWindow) {
+      const prev = await fse.readJSON(
+        path.join(instancesPath, instanceName, 'config.json')
+      );
+      await fse.writeJSON(
+        path.join(instancesPath, instanceName, 'config.json'),
+        {
+          ...prev,
+          timePlayed: (Number(prev.timePlayed) || 0) + 1
+        }
+      );
+    } else {
+      mainWindow.webContents.send(
+        'update-instance-config',
+        instanceName,
+        prev => ({
+          ...prev,
+          timePlayed: (Number(prev.timePlayed) || 0) + 1
+        })
+      );
+    }
+  }, 60 * 1000);
+
+  ps.stdout.on('data', data => {
+    const logString = parseAnsi(data.toString())[0];
+    startedInstances[ps.pid].logs.push(logString);
+    if (startedInstances[ps.pid].console) {
+      startedInstances[ps.pid].console.webContents.send('log-data', logString);
+    }
+  });
+
+  ps.stderr.on('data', data => {
+    const logString = parseAnsi(data.toString());
+    startedInstances[ps.pid].logs.push(logString);
+    if (startedInstances[ps.pid]?.console) {
+      startedInstances[ps.pid].console.webContents.send('log-data', logString);
+    }
+  });
+
+  ps.on('close', () => {
+    clearInterval(playTimer);
+    startedInstances = omit(startedInstances, [ps.pid]);
+    startedInstances[ps.pid] = null;
+    if (!ps.killed) {
+      ps.kill();
+    }
+    fse.remove(instanceJLFPath);
+    if (process.platform === 'win32') fse.remove(symLinkDirPath);
+    if (mainWindow) {
+      mainWindow.webContents.send('instanceStopped', instanceName);
+      mainWindow.show();
+      mainWindow.focus();
+    } else {
+      mainWindow = createWindow(startedInstances);
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+  return ps;
+}
+
+ipcMain.handle('launchInstance', (e, ...data) => {
+  return initializeInstance(...data);
+});
+
+ipcMain.handle('fetchStartedInstances', () => {
+  return startedInstances;
+});
+
+ipcMain.handle('showInstanceConsole', (e, pid, instanceName) => {
+  if (startedInstances[pid]?.console?.webContents) {
+    startedInstances[pid].console.show();
+  } else {
+    createConsoleWindow(instanceName, pid, true);
+  }
+});
+
+app.on('ready', () => {
+  createWindow();
+  createTrayIcon();
+});
 
 app.on("window-all-closed", () => {
   if (watcher) {
     watcher.stop();
     watcher = null;
   }
-  if (process.platform !== "darwin") {
+  if (
+    process.platform !== 'darwin' &&
+    Object.keys(startedInstances).length === 0
+  ) {
     app.quit();
   }
 });
@@ -308,6 +459,10 @@ ipcMain.handle("update-progress-bar", (event, p) => {
 ipcMain.handle("hide-window", () => {
   if (mainWindow) {
     mainWindow.hide();
+    setTimeout(() => {
+      mainWindow.close();
+      mainWindow = null;
+    }, 1000);
   }
 });
 
@@ -325,6 +480,10 @@ ipcMain.handle("minimize-window", () => {
 
 ipcMain.handle("show-window", () => {
   if (mainWindow) {
+    mainWindow.show();
+    mainWindow.focus();
+  } else {
+    createWindow();
     mainWindow.show();
     mainWindow.focus();
   }
@@ -356,8 +515,12 @@ ipcMain.handle("getOldLauncherUserData", () => {
   return oldLauncherUserData;
 });
 
-ipcMain.handle("getExecutablePath", () => {
-  return path.dirname(app.getPath("exe"));
+ipcMain.handle('getPotatoPcMode', () => {
+  return lowSpecs;
+});
+
+ipcMain.handle('getExecutablePath', () => {
+  return path.dirname(app.getPath('exe'));
 });
 
 ipcMain.handle("getAppVersion", () => {

@@ -15,7 +15,10 @@ import {
   switchToFirstValidAccount,
   checkClientToken,
   updateUserData,
-} from "../../common/reducers/actions";
+  updatePotatoPcMode,
+  addStartedInstance,
+  removeStartedInstance
+} from '../../common/reducers/actions';
 import {
   load,
   received,
@@ -68,8 +71,30 @@ function DesktopRoot({ store }) {
   });
 
   const init = async () => {
+    const startedInstances = await ipcRenderer.invoke('fetchStartedInstances');
+    Object.entries(startedInstances).map(([k, v]) => {
+      if (v) {
+        dispatch(
+          addStartedInstance({
+            instanceName: v.instanceName,
+            pid: k,
+            initialized: true
+          })
+        );
+      }
+      return null;
+    });
+
+    ipcRenderer.on('instanceStopped', (e, instanceName) => {
+      dispatch(removeStartedInstance(instanceName));
+    });
+
     dispatch(requesting(features.mcAuthentication));
-    const userDataStatic = await ipcRenderer.invoke("getUserData");
+    const potatoPcMode = await ipcRenderer.invoke('getPotatoPcMode');
+    if (potatoPcMode) {
+      dispatch(updatePotatoPcMode(true));
+    }
+    const userDataStatic = await ipcRenderer.invoke('getUserData');
     const userData = dispatch(updateUserData(userDataStatic));
     await dispatch(checkClientToken());
     dispatch(initNews());

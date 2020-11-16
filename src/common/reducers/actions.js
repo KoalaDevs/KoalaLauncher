@@ -1,30 +1,30 @@
-import axios from "axios";
-import path from "path";
-import { ipcRenderer } from "electron";
-import { v5 as uuid } from "uuid";
-import { machineId } from "node-machine-id";
-import fse from "fs-extra";
-import coerce from "semver/functions/coerce";
-import gte from "semver/functions/gte";
-import lt from "semver/functions/lt";
-import lte from "semver/functions/lte";
-import gt from "semver/functions/gt";
+import axios from 'axios';
+import path from 'path';
+import { ipcRenderer } from 'electron';
+import { v5 as uuid } from 'uuid';
+import { machineId } from 'node-machine-id';
+import fse from 'fs-extra';
+import coerce from 'semver/functions/coerce';
+import gte from 'semver/functions/gte';
+import lt from 'semver/functions/lt';
+import lte from 'semver/functions/lte';
+import gt from 'semver/functions/gt';
 import log from "electron-log";
-import omitBy from "lodash/omitBy";
-import { pipeline } from "stream";
-import zlib from "zlib";
-import lockfile from "lockfile";
-import omit from "lodash/omit";
-import Seven, { extractFull } from "node-7z";
-import { push } from "connected-react-router";
+import omitBy from 'lodash/omitBy';
+import { pipeline } from 'stream';
+import zlib from 'zlib';
+import lockfile from 'lockfile';
+import omit from 'lodash/omit';
+import Seven, { extractFull } from 'node-7z';
+import { push } from 'connected-react-router';
 import { spawn } from "child_process";
-import symlink from "symlink-dir";
-import { promises as fs } from "fs";
-import originalFs from "original-fs";
-import pMap from "p-map";
-import makeDir from "make-dir";
-import { parse } from "semver";
-import * as ActionTypes from "./actionTypes";
+import symlink from 'symlink-dir';
+import { promises as fs } from 'fs';
+import originalFs from 'original-fs';
+import pMap from 'p-map';
+import makeDir from 'make-dir';
+import { parse } from 'semver';
+import * as ActionTypes from './actionTypes';
 import {
   NEWS_URL,
   MC_RESOURCES_URL,
@@ -89,14 +89,13 @@ import {
 } from "../../app/desktop/utils";
 import {
   downloadFile,
-  downloadInstanceFiles,
-} from "../../app/desktop/utils/downloader";
-import { removeDuplicates, getFileMurmurHash2 } from "../utils";
-import { UPDATE_CONCURRENT_DOWNLOADS } from "./settings/actionTypes";
-import { UPDATE_MODAL } from "./modals/actionTypes";
-import PromiseQueue from "../../app/desktop/utils/PromiseQueue";
-import fmlLibsMapping from "../../app/desktop/utils/fmllibs";
-import { openModal } from "./modals/actions";
+  downloadInstanceFiles
+} from '../../app/desktop/utils/downloader';
+import { removeDuplicates, getFileMurmurHash2 } from '../utils';
+import { UPDATE_CONCURRENT_DOWNLOADS } from './settings/actionTypes';
+import { UPDATE_MODAL } from './modals/actionTypes';
+import PromiseQueue from '../../app/desktop/utils/PromiseQueue';
+import fmlLibsMapping from '../../app/desktop/utils/fmllibs';
 
 export function initManifests() {
   return async (dispatch, getState) => {
@@ -319,6 +318,15 @@ export function updateUserData(userData) {
       path: userData,
     });
     return userData;
+  };
+}
+
+export function updatePotatoPcMode(value) {
+  return dispatch => {
+    dispatch({
+      type: ActionTypes.UPDATE_POTATO_PC_MODE,
+      value
+    });
   };
 }
 
@@ -1366,7 +1374,7 @@ export function downloadInstance(instanceName) {
     );
 
     // Wait 400ms to avoid "The process cannot access the file because it is being used by another process."
-    await new Promise((resolve) => setTimeout(() => resolve(), 400));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     await extractNatives(
       libraries,
@@ -1966,8 +1974,6 @@ export function launchInstance(instanceName) {
       "__JLF__.jar"
     );
 
-    let errorLogs = "";
-
     const mcJson = await fse.readJson(
       path.join(_getMinecraftVersionsPath(state), `${modloader[1]}.json`)
     );
@@ -2104,62 +2110,12 @@ export function launchInstance(instanceName) {
         javaArguments
       ).join(" ")}`.replace(...replaceRegex)
     );
-
-    if (state.settings.hideWindowOnGameLaunch) {
-      await ipcRenderer.invoke("hide-window");
-    }
-
-    const ps = spawn(
-      `"${javaPath.replace(...replaceRegex)}"`,
-      jvmArguments.map((v) => v.replace(...replaceRegex)),
-      {
-        cwd: instancePath,
-        shell: true,
-      }
-    );
-
-    const playTimer = setInterval(() => {
-      dispatch(
-        updateInstanceConfig(instanceName, (prev) => ({
-          ...prev,
-          timePlayed: (Number(prev.timePlayed) || 0) + 1,
-        }))
-      );
-    }, 60 * 1000);
-
     dispatch(
       updateInstanceConfig(instanceName, (prev) => ({
         ...prev,
         lastPlayed: Date.now(),
       }))
     );
-    dispatch(addStartedInstance({ instanceName, pid: ps.pid }));
-
-    ps.stdout.on("data", (data) => {
-      console.log(data.toString());
-      if (data.toString().includes("Setting user:")) {
-        dispatch(updateStartedInstance({ instanceName, initialized: true }));
-      }
-    });
-
-    ps.stderr.on("data", (data) => {
-      console.error(`ps stderr: ${data}`);
-      errorLogs += data || "";
-    });
-
-    ps.on("close", async (code) => {
-      clearInterval(playTimer);
-      if (code !== 0) {
-        dispatch(
-          openModal("InstanceCrashed", {
-            instanceName,
-            code,
-            errorLogs: errorLogs?.toString("utf8"),
-          })
-        );
-        console.warn(`Process exited with code ${code}. Not too good..`);
-      }
-    });
   };
 }
 

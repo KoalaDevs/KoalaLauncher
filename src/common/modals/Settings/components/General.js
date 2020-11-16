@@ -28,14 +28,16 @@ import {
 import {
   updateDiscordRPC,
   updateHideWindowOnGameLaunch,
-  updatePotatoPcMode,
   updateShowNews,
-  updateCurseReleaseChannel,
-} from "../../../reducers/settings/actions";
+  updateCurseReleaseChannel
+} from '../../../reducers/settings/actions';
 import HorizontalLogo from "../../../../ui/HorizontalLogo.png";
-import { updateConcurrentDownloads } from "../../../reducers/actions";
-import { openModal } from "../../../reducers/modals/actions";
-import { extractFace } from "../../../../app/desktop/utils";
+import {
+  updateConcurrentDownloads,
+  updatePotatoPcMode
+} from '../../../reducers/actions';
+import { openModal } from '../../../reducers/modals/actions';
+import { extractFace } from '../../../../app/desktop/utils';
 
 const MyAccountPrf = styled.div`
   width: 100%;
@@ -238,6 +240,7 @@ const General = () => {
   const curseReleaseChannel = useSelector(
     (state) => state.settings.curseReleaseChannel
   );
+  const [loadingPotatoPcMode, setLoadingPotatoPcMode] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -559,12 +562,22 @@ const General = () => {
           `}
         >
           You got a potato PC? Don&apos;t worry! We got you covered. Enable this
-          and all animations and special effects will be disabled
+          and all animations and special effects will be disabled.
         </p>
         <Switch
-          onChange={(e) => {
+          onChange={async e => {
+            setLoadingPotatoPcMode(true);
+
+            if (e) {
+              await fs.writeFile(path.join(userData, 'lowSpecs'), null);
+            } else {
+              await fs.unlink(path.join(userData, 'lowSpecs'));
+            }
+
+            setLoadingPotatoPcMode(false);
             dispatch(updatePotatoPcMode(e));
           }}
+          loading={loadingPotatoPcMode}
           checked={potatoPcMode}
         />
       </DiscordRpc>
