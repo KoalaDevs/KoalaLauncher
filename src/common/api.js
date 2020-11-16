@@ -1,5 +1,5 @@
 // @flow
-import axios from 'axios';
+import axios from "axios";
 import {
   MOJANG_APIS,
   FORGESVC_URL,
@@ -7,24 +7,25 @@ import {
   FABRIC_APIS,
   JAVA_MANIFEST_URL,
   IMGUR_CLIENT_ID,
-  FORGESVC_CATEGORIES
-} from './utils/constants';
-import { sortByDate } from './utils';
+  FORGESVC_CATEGORIES,
+  PASTEBIN_API_KEY,
+} from "./utils/constants";
+import { sortByDate } from "./utils";
 
 export const mcAuthenticate = (username, password, clientToken) => {
   return axios.post(
     `${MOJANG_APIS}/authenticate`,
     {
       agent: {
-        name: 'Minecraft',
-        version: 1
+        name: "Minecraft",
+        version: 1,
       },
       username,
       password,
       clientToken,
-      requestUser: true
+      requestUser: true,
     },
-    { headers: { 'Content-Type': 'application/json' } }
+    { headers: { "Content-Type": "application/json" } }
   );
 };
 
@@ -33,9 +34,9 @@ export const mcValidate = (accessToken, clientToken) => {
     `${MOJANG_APIS}/validate`,
     {
       accessToken,
-      clientToken
+      clientToken,
     },
-    { headers: { 'Content-Type': 'application/json' } }
+    { headers: { "Content-Type": "application/json" } }
   );
 };
 
@@ -45,27 +46,46 @@ export const mcRefresh = (accessToken, clientToken) => {
     {
       accessToken,
       clientToken,
-      requestUser: true
+      requestUser: true,
     },
-    { headers: { 'Content-Type': 'application/json' } }
+    { headers: { "Content-Type": "application/json" } }
   );
 };
 
-export const mcGetPlayerSkin = uuid => {
+export const mcGetPlayerSkin = (uuid) => {
   return axios.get(
     `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`
   );
 };
 
+export const pasteBinPost = (code) => {
+  const bodyFormData = new FormData();
+  bodyFormData.append("api_dev_key", PASTEBIN_API_KEY);
+  bodyFormData.append("api_option", "paste");
+  bodyFormData.append("api_paste_code", code);
+
+  const config = {
+    headers: {
+      "content-type": "multipart/form-data",
+    },
+  };
+
+  return axios.post(
+    "https://pastebin.com/api/api_post.php",
+    bodyFormData,
+    config.headers
+  );
+};
+
 export const imgurPost = (image, onProgress) => {
   const bodyFormData = new FormData();
-  bodyFormData.append('image', image);
+  bodyFormData.append("image", image);
 
-  return axios.post('https://api.imgur.com/3/image', bodyFormData, {
+  return axios.post("https://api.imgur.com/3/image", bodyFormData, {
     headers: {
-      Authorization: `Client-ID ${IMGUR_CLIENT_ID}`
+      Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
     },
-    ...(onProgress && { onUploadProgress: onProgress })
+    ...(onProgress && { onUploadProgress: onProgress }),
   });
 };
 
@@ -74,9 +94,9 @@ export const mcInvalidate = (accessToken, clientToken) => {
     `${MOJANG_APIS}/invalidate`,
     {
       accessToken,
-      clientToken
+      clientToken,
     },
-    { headers: { 'Content-Type': 'application/json' } }
+    { headers: { "Content-Type": "application/json" } }
   );
 };
 
@@ -110,25 +130,25 @@ export const getFabricJson = ([, version, loader]) => {
 
 // FORGE ADDONS
 
-export const getAddon = addonID => {
+export const getAddon = (addonID) => {
   const url = `${FORGESVC_URL}/addon/${addonID}`;
   return axios.get(url);
 };
 
-export const getMultipleAddons = async addons => {
+export const getMultipleAddons = async (addons) => {
   const url = `${FORGESVC_URL}/addon`;
   return axios.post(url, addons);
 };
 
-export const getAddonFiles = addonID => {
+export const getAddonFiles = (addonID) => {
   const url = `${FORGESVC_URL}/addon/${addonID}/files`;
-  return axios.get(url).then(res => ({
+  return axios.get(url).then((res) => ({
     ...res,
-    data: res.data.sort(sortByDate)
+    data: res.data.sort(sortByDate),
   }));
 };
 
-export const getAddonDescription = addonID => {
+export const getAddonDescription = (addonID) => {
   const url = `${FORGESVC_URL}/addon/${addonID}/description`;
   return axios.get(url);
 };
@@ -138,7 +158,7 @@ export const getAddonFile = (addonID, fileID) => {
   return axios.get(url);
 };
 
-export const getAddonsByFingerprint = fingerprints => {
+export const getAddonsByFingerprint = (fingerprints) => {
   const url = `${FORGESVC_URL}/fingerprint`;
   return axios.post(url, fingerprints);
 };
@@ -165,14 +185,14 @@ export const getSearch = (
   const url = `${FORGESVC_URL}/addon/search`;
   const params = {
     gameId: 432,
-    sectionId: type === 'mods' ? 6 : 4471,
+    sectionId: type === "mods" ? 6 : 4471,
     categoryId: categoryId || 0,
     pageSize,
     sort,
     isSortDescending,
     index,
     searchFilter,
-    gameVersion: gameVersion || ''
+    gameVersion: gameVersion || "",
   };
   return axios.get(url, { params });
 };

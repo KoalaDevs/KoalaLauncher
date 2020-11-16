@@ -1,6 +1,6 @@
-import omit from 'lodash/omit';
-import * as ActionTypes from './actionTypes';
-import PromiseQueue from '../../app/desktop/utils/PromiseQueue';
+import omit from "lodash/omit";
+import * as ActionTypes from "./actionTypes";
+import PromiseQueue from "../../app/desktop/utils/PromiseQueue";
 
 function news(state = [], action) {
   switch (action.type) {
@@ -49,8 +49,8 @@ function downloadQueue(state = {}, action) {
           status: null,
           currentPhase: 1,
           totalPhases: action.phases,
-          manifest: action.manifest
-        }
+          manifest: action.manifest,
+        },
       };
     case ActionTypes.REMOVE_DOWNLOAD_FROM_QUEUE:
       return omit(state, action.instanceName);
@@ -59,16 +59,16 @@ function downloadQueue(state = {}, action) {
         ...state,
         [action.instanceName]: {
           ...state[action.instanceName],
-          percentage: action.percentage
-        }
+          percentage: action.percentage,
+        },
       };
     case ActionTypes.UPDATE_DOWNLOAD_STATUS:
       return {
         ...state,
         [action.instanceName]: {
           ...state[action.instanceName],
-          status: action.status
-        }
+          status: action.status,
+        },
       };
     default:
       return state;

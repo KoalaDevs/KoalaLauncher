@@ -28,7 +28,7 @@
 
 
     ${ifNot} ${isUpdated}
-        FileOpen $4 "$APPDATA\gdlauncher_next\override.data" r
+        FileOpen $4 "$APPDATA\koalalauncher\override.data" r
         FileRead $4 $0
         RMDir /r "$0\instances"
         RMDir /r "$0\java"
@@ -54,7 +54,7 @@
         
         FileClose $4
 
-        RMDir /r "$APPDATA\gdlauncher_next"
+        RMDir /r "$APPDATA\koalalauncher"
     ${endIf}
     
 
