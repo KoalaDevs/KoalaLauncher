@@ -2,7 +2,7 @@
 
 ![Javascript][javascriptImg] ![Love][buildLoveImg]
 
-# ❓ What is the Koala Launcher
+# ❓ What is the Koala Launche
 Koala Launcher is a fork of GDLauncher aiming to be more FOSS Friendy towards Pull Requests and Contribution
 
 <p align="center">
